@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>数学口算练习</title>
+    <style>
+        @media print {
+            #settings {
+                display: none;
+            }
+        }
+
+        table {
+            width: 100%;
+        }
+
+        tr {
+            border: 1px solid #000;
+            padding: 5px;
+        }
+
+        td {
+            border: 0px solid #000;
+            padding: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>数学口算练习</h1>
+
+    <div id="settings">
+        <label for="operation">操作(多选):</label>
+        <br>
+        <input type="checkbox" id="add" checked>加法
+        <br>
+        <input type="checkbox" id="subtract" checked>减法
+        <br>
+        <input type="checkbox" id="multiply" checked>乘法
+        <br>
+        <input type="checkbox" id="divide" checked>除法
+        <br>
+        <label for="quantity">题目数量:</label>
+        <input type="number" id="quantity" value="100" min="1">
+        <br>
+        <button onclick="generateProblems()">生成题目</button>
+        <button id="showAnswer" data-show-answer=true onclick="toggleAnswer()">显示答案</button>
+        <button onclick="window.print()">打印</button>
+    </div>
+
+    <div id="printArea">
+        <table id="questionsTable"></table>
+    </div>
+
+    <script>
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // 生成随机数字（0-9）
+        function getRandomNumber() {
+            return Math.floor(Math.random() * 10);
+        }
+
+        // [加法]生成符合要求的随机数字对
+        function generateRandomNumbers(min = 11, max = 19) {
+            let firstNumber = getRandomNumber();
+            let secondNumber = getRandomNumber();
+            let sum = firstNumber + secondNumber;
+
+            // 如果和不在范围 11-19 内，则重新生成数字对
+            while (sum < min || sum > max) {
+                firstNumber = getRandomNumber();
+                secondNumber = getRandomNumber();
+                sum = firstNumber + secondNumber;
+            }
+
+            return [firstNumber, secondNumber];
+        }
+
+        // [减法]生成随机数字对
+        function generateDifferentNumbers() {
+            let number1 = getRandomNumber();
+            let number2 = getRandomNumber();
+            // 确保两个数字不相同
+            while (number2 === number1) {
+                number2 = getRandomNumber();
+            }
+            // 按照从小到大排序
+            const sortedNumbers = [number1, number2].sort((x, y) => x - y);
+            return sortedNumbers;
+        }
+
+        // 生成两个不同的随机数字（0-9），使得乘积不大于 81，且不小于 12，按照从小到大排序并返回
+        function generateDifferentNumbers2() {
+            let number1 = getRandomNumber();
+            let number2 = getRandomNumber();
+            let product = number1 * number2;
+
+            // 确保两个数字不相同，且乘积不大于 81，且不小于 21
+            while (number2 === number1 || product > 81 || product < 21) {
+                number1 = getRandomNumber();
+                number2 = getRandomNumber();
+                product = number1 * number2;
+            }
+
+            // 按照从小到大排序
+            const sortedNumbers = [number1, number2].sort((a, b) => a - b);
+
+            return sortedNumbers;
+        }
+
+        function generateProblem(operation) {
+            let a, b, problem, c;
+            let carry, borrow;
+            switch (operation) {
+                case 'add':
+                    [a, b] = generateRandomNumbers(11, 19);
+                    [x, y] = generateRandomNumbers(2, 8);
+                    a = x * 10 + a;
+                    b = y * 10 + b;
+                    problem = `${a} + ${b} = ______`;
+                    break;
+                case 'subtract':
+                    [a, b] = generateDifferentNumbers();
+                    [x, y] = generateDifferentNumbers();
+                    a = y * 10 + a;
+                    b = x * 10 + b;
+                    problem = `${a} - ${b} = ______`;
+                    break;
+                case 'multiply':
+                    [a, b] = generateDifferentNumbers2();
+                    problem = `${a} * ${b} = ______`;
+                    break;
+                case 'divide':
+                    [a, b] = generateDifferentNumbers2();
+                    c = a * b;
+                    problem = `${c} ÷ ${a} = ______`;
+                    break;
+            }
+
+            return problem;
+        }
+
+        function generateProblems() {
+            const operations = ['add', 'subtract', 'multiply', 'divide'].filter(op => document.getElementById(op).checked);
+            const quantity = document.getElementById('quantity').value;
+            const printArea = document.getElementById('questionsTable');
+            printArea.innerHTML = '';
+
+            let row;
+            let count = 0;
+            while (count < quantity) {
+                if (count % 5 === 0) {
+                    row = document.createElement('tr');
+                    printArea.appendChild(row);
+                }
+
+                const operation = operations[getRandomInt(0, operations.length - 1)];
+                const problem = generateProblem(operation);
+                const cell = document.createElement('td');
+                cell.textContent = problem;
+                row.appendChild(cell);
+
+                count++;
+            }
+        }
+
+        function toggleAnswer() {
+            const showAnswerBtn = document.getElementById('showAnswer');
+            const showAnswer = showAnswerBtn.getAttribute('data-show-answer') === 'true';
+            const cells = document.querySelectorAll('#questionsTable td');
+            cells.forEach(cell => {
+                const problem = cell.textContent;
+                const operation = problem.split(' ')[1];
+                const operands = [problem.split(' ')[0].split(/[\+\-\*÷]/), problem.split(' ')[2].split(/[\+\-\*÷]/)];
+                let answer;
+                switch (operation) {
+                    case '+':
+                        answer = Number(operands[0]) + Number(operands[1]);
+                        break;
+                    case '-':
+                        answer = Number(operands[0]) - Number(operands[1]);
+                        break;
+                    case '*':
+                        answer = Number(operands[0]) * Number(operands[1]);
+                        break;
+                    case '÷':
+                        answer = Number(operands[0]) / Number(operands[1]);
+                        break;
+                }
+                if (showAnswer) {
+                    cell.textContent = problem.replace('______', answer);
+                }
+                else {
+                    arr = problem.split(' ');
+                    arr.pop();
+                    cell.textContent = arr.join(' ') + ' ' + '______';
+                }
+                showAnswerBtn.setAttribute('data-show-answer', !showAnswer);
+                showAnswerBtn.textContent = showAnswer ? '隐藏答案' : '显示答案';
+            });
+        }
+    </script>
+</body>
+
+</html>
